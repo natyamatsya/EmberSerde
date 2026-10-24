@@ -259,12 +259,12 @@ struct AnyOf[*Ts: FieldCheck](FieldCheck):
             __get_mvalue_as_litref(self.checks)
         )
 
-        @__parameter
-        def put[idx: Int](var elt: Self.Ts[idx]):
+        self.msg = msg
+
+        def put[idx: Int](var elt: Self.Ts[idx]) {mut self}:
             Pointer(to=self.checks[idx]).unsafe_write(elt^)
 
-        checks^.consume_elements[put]()
-        self.msg = msg
+        checks^.consume_elements(put)
 
     def check[U: AnyType](self, value: U) -> Bool:
         comptime for k in range(Self.Ts.length):
@@ -290,12 +290,12 @@ struct OneOf[*Ts: FieldCheck](FieldCheck):
             __get_mvalue_as_litref(self.checks)
         )
 
-        @__parameter
-        def put[idx: Int](var elt: Self.Ts[idx]):
+        self.msg = msg
+
+        def put[idx: Int](var elt: Self.Ts[idx]) {mut self}:
             Pointer(to=self.checks[idx]).unsafe_write(elt^)
 
-        checks^.consume_elements[put]()
-        self.msg = msg
+        checks^.consume_elements(put)
 
     def check[U: AnyType](self, value: U) -> Bool:
         var n = 0
@@ -322,12 +322,12 @@ struct NoneOf[*Ts: FieldCheck](FieldCheck):
             __get_mvalue_as_litref(self.checks)
         )
 
-        @__parameter
-        def put[idx: Int](var elt: Self.Ts[idx]):
+        self.msg = msg
+
+        def put[idx: Int](var elt: Self.Ts[idx]) {mut self}:
             Pointer(to=self.checks[idx]).unsafe_write(elt^)
 
-        checks^.consume_elements[put]()
-        self.msg = msg
+        checks^.consume_elements(put)
 
     def check[U: AnyType](self, value: U) -> Bool:
         comptime for k in range(Self.Ts.length):

@@ -376,7 +376,7 @@ __extension Counter(Deserializable):
         while m.has_next():
             try:
                 var k = m.expect_key[Self.V]()
-                result[k^] = m.expect_value[Int]()
+                result[k] = m.expect_value[Int]()
             except e:
                 _prepend_index(e, idx)
                 raise e^
@@ -427,8 +427,7 @@ __extension Tuple(Deserializable):
         ](), "Tuple deserialize requires Defaultable elements"
         var result = Self()
 
-        @__parameter
-        def dispose[idx: Int](var elt: Self.Ts[idx]):
+        def dispose[idx: Int](var elt: Self.Ts[idx]) -> None:
             _ = rebind_var[downcast[Self.Ts[idx], Base]](elt^)
 
         var filled = 0
@@ -443,7 +442,7 @@ __extension Tuple(Deserializable):
 
             state.end()
         except e:
-            result^.deinit_with[dispose]()
+            result^.deinit_with(dispose)
             _prepend_index(e, filled)
             raise e^
 

@@ -59,6 +59,12 @@ struct RenameAll(Base):
     var policy: RenamePolicy
 
 
+# `SkipIfNone` on every `Optional` field of the struct.
+@fieldwise_init
+struct SkipNoneFields(Base):
+    pass
+
+
 # Raised-on instead of ignored: an unknown wire field makes deserialization fail.
 @fieldwise_init
 struct DenyUnknownFields(Base):

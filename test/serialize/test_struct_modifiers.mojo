@@ -4,6 +4,7 @@ from emberserde.field import Rename
 from emberserde.struct_modifiers import (
     RenameAll,
     RenamePolicy,
+    SkipNoneFields,
     apply_rename_policy,
 )
 
@@ -311,6 +312,25 @@ def test_rename_policy_equality() raises:
     assert_false(RenamePolicy.SnakeCase == RenamePolicy.CamelCase)
     assert_true(RenamePolicy.SnakeCase != RenamePolicy.CamelCase)
     assert_false(RenamePolicy.CamelCase != RenamePolicy.CamelCase)
+
+
+@__annotation(SkipNoneFields())
+@fieldwise_init
+struct SparseRec(Copyable, Movable):
+    var id: Int
+    var title: Optional[String]
+    var size: Optional[Int]
+
+
+def test_skip_none_fields() raises:
+    assert_equal(
+        debug_string(SparseRec(id=1, title=String("t"), size=None)),
+        'test_struct_modifiers.SparseRec { id: 1, title: Some("t") }',
+    )
+    assert_equal(
+        debug_string(SparseRec(id=2, title=None, size=None)),
+        "test_struct_modifiers.SparseRec { id: 2 }",
+    )
 
 
 def main() raises:

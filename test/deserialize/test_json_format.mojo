@@ -18,6 +18,7 @@ from emberserde.field import Rename
 from emberserde.struct_modifiers import (
     RenameAll,
     DenyUnknownFields,
+    SkipNoneFields,
 )
 from emberserde.validate import Range, Size
 
@@ -434,6 +435,27 @@ def test_conformance() raises:
         conforms_to(JsonDeserializer[MutAnyOrigin], SelfDescribingDeserializer)
     )
     assert_true(conforms_to(JsonDeserializer[MutAnyOrigin], Deserializer))
+
+
+@__annotation(SkipNoneFields())
+@fieldwise_init
+struct SparseRead(Copyable, Defaultable, Movable):
+    var label: String
+    var note: Optional[Int64]
+
+    def __init__(out self):
+        self.label = String()
+        self.note = None
+
+
+def test_skip_none_fields_read() raises:
+    # what the writer leaves out reads back as None
+    var r = from_json[SparseRead]('{"label":"m"}')
+    assert_equal(r.label, "m")
+    assert_false(Bool(r.note))
+    assert_equal(
+        from_json[SparseRead]('{"label":"m","note":4}').note.value(), 4
+    )
 
 
 def main() raises:

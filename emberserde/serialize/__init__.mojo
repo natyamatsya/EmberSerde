@@ -13,6 +13,7 @@ from emberserde.field_meta import (
     static_wire_name,
     wire_field_names,
     is_skipped,
+    skips_none,
     has_unique_wire_names,
 )
 
@@ -36,6 +37,13 @@ def _apply_serialize_with[
         return a.apply(value)
     except e:
         raise SerializationError(String(e), SerErrorKind.InvalidValue)
+
+
+# Whether `Optional` field `i` of `v` is `None` at runtime.
+@always_inline
+def _is_none[T: AnyType, i: Int](v: T) -> Bool:
+    comptime FT = downcast[reflect[T].field_types()[i], Boolable]
+    return not rebind[FT](reflect[T].field_ref[i](v)).__bool__()
 
 
 # Writes field `i` of `v`: through its `SerializeWith` when it carries one,
@@ -257,13 +265,22 @@ trait Serializer:
         comptime field_count = r.field_count()
 
         # Annotated fields may rename themselves or drop out entirely
-        # (`Skip`), so the emitted count can be smaller than the struct's.
-        comptime visible = len(wire_field_names[T]())
+        # (`Skip`, or `SkipIfNone` while `None`), so the emitted count can be
+        # smaller than the struct's; a format may rely on it being exact.
+        var visible = len(wire_field_names[T]())
+        comptime for i in range(field_count):
+            comptime if not is_skipped[T, i]() and skips_none[T, i]():
+                if _is_none[T, i](v):
+                    visible -= 1
 
         var state = self.begin_struct[T](visible)
 
         comptime for i in range(field_count):
             comptime if not is_skipped[T, i]():
-                _write_field[T, i](state, v)
+                comptime if skips_none[T, i]():
+                    if not _is_none[T, i](v):
+                        _write_field[T, i](state, v)
+                else:
+                    _write_field[T, i](state, v)
 
         state.end()

@@ -34,6 +34,14 @@ struct Skip(Base):
     pass
 
 
+# Not written while the field, an `Optional`, is `None`: many formats tell an
+# absent member from a null one, and schemas often allow only the first. Read
+# like any `Optional` field, so an absent member reads as `None`.
+@fieldwise_init
+struct SkipIfNone(Base):
+    pass
+
+
 # The value a field absent from the wire takes. Needs no `T()`, so it works
 # for non-Defaultable field types.
 @fieldwise_init

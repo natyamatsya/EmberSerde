@@ -256,6 +256,7 @@ struct User(Copyable, Defaultable, Movable):
 | `Rename(name)` | Wire name differs from the declared name. |
 | `Alias(name)` | Additional name accepted on read. Repeat for more. |
 | `Skip` | Never written; filled from the default on read. |
+| `SkipIfNone` | On an `Optional` field: not written while `None`, so the member is absent rather than `null`. Read like any `Optional` field (absent reads as `None`). Self-describing formats only: a positional format cannot tell which fields are missing. |
 | `Default(value)` | Value used when the field is absent from the wire. Works for non-`Defaultable` types. Must match the field's type exactly (`Default(Int64(3))` on an `Int64`). |
 | `Validate(f, msg=)` | `def(T) -> Bool` run after reading; failure raises `InvalidValue` with `msg` (default "Validation failed"). One of the checks in [Validation](#validation). |
 | `Transform(f)` | Reads the wire value as `f`'s argument type and stores `f(value)`. See [Validation](#validation). |
@@ -410,6 +411,20 @@ struct Config(Copyable, Defaultable, Movable):
 
 # wire: {"apiKey":"k","maxRetries":5}
 # {"apiKey":"k","maxRetries":5,"extra":1} -> raises UnknownField
+```
+
+`SkipNoneFields()` puts `SkipIfNone` on every `Optional` field of the struct,
+for schemas where an optional member is omitted rather than `null`:
+
+```mojo
+@__annotation(RenameAll(.CamelCase), SkipNoneFields())
+@fieldwise_init
+struct Tool(Copyable, Movable):
+    var name: String
+    var description: Optional[String]
+    var output_schema: Optional[String]
+
+# {"name":"t"}, or {"name":"t","outputSchema":"..."}
 ```
 
 A field's own `Rename` wins over `RenameAll`. `RenamePolicy` offers `SnakeCase`, `CamelCase`, `PascalCase`, `KebabCase`,

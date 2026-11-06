@@ -3,10 +3,11 @@ from std.collections.string.string_span import get_static_string
 from std.reflection import reflect
 
 from emberserde.error import DeserializationError, DerErrorKind
-from emberserde.field import Alias, Rename, Skip, TypedAnnotation
+from emberserde.field import Alias, Rename, Skip, SkipIfNone, TypedAnnotation
 from emberserde.struct_modifiers import (
     DenyUnknownFields,
     RenameAll,
+    SkipNoneFields,
     apply_rename_policy,
     count_struct_annotations,
     struct_annotations,
@@ -53,6 +54,17 @@ def __is_optional[T: AnyType]() -> Bool:
 # Whether field `i` drops out of the wire entirely (`Skip`).
 def is_skipped[T: AnyType, i: Int]() -> Bool:
     return count_annotations[T, i, Skip]() > 0
+
+
+# Whether field `i` is left out while it is `None` (`SkipIfNone`, or the
+# struct's `SkipNoneFields`, which passes over non-`Optional` fields).
+def skips_none[T: AnyType, i: Int]() -> Bool:
+    comptime optional = __is_optional[reflect[T].field_types()[i]]()
+    comptime marked = count_annotations[T, i, SkipIfNone]() > 0
+    comptime assert optional or not marked, "SkipIfNone needs an Optional field"
+    return optional and (
+        marked or count_struct_annotations[T, SkipNoneFields]() > 0
+    )
 
 
 # The wire name field `i` serializes under. Precedence: a `Rename` >

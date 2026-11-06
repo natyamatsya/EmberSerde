@@ -34,6 +34,7 @@ from .field import (
     Rename,
     SerializeWith,
     Skip,
+    SkipIfNone,
     Transform,
     clamp,
 )
@@ -59,6 +60,7 @@ from .field_meta import (
 )
 from .struct_modifiers import (
     DenyUnknownFields,
+    SkipNoneFields,
     RenameAll,
     RenamePolicy,
 )

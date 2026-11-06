@@ -2,7 +2,7 @@ from std.testing import assert_equal, TestSuite
 from std.utils import Variant
 from _json_format import to_json, JsonValue, JsonArray, JsonObject, JsonNull
 from emberserde.field import Rename
-from emberserde.struct_modifiers import RenameAll
+from emberserde.struct_modifiers import RenameAll, SkipNoneFields
 
 
 @fieldwise_init
@@ -79,6 +79,26 @@ def test_struct() raises:
     var none = Nested(label=String("m"), point=Point(x=0, y=0), note=None)
     assert_equal(
         to_json(none), '{"label":"m","point":{"x":0,"y":0},"note":null}'
+    )
+
+
+@__annotation(RenameAll(.CamelCase), SkipNoneFields())
+@fieldwise_init
+struct SparseNested(Copyable, Movable):
+    var label: String
+    var note: Optional[Int64]
+    var page_size: Optional[Int64]
+
+
+def test_struct_skip_none_fields() raises:
+    # absent, not null: the member is left out, commas and all
+    assert_equal(
+        to_json(SparseNested(label=String("m"), note=None, page_size=None)),
+        '{"label":"m"}',
+    )
+    assert_equal(
+        to_json(SparseNested(label=String("m"), note=None, page_size=Int64(2))),
+        '{"label":"m","pageSize":2}',
     )
 
 
